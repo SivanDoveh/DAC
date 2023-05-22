@@ -13,7 +13,7 @@ parser.add_argument(
     action="store_true",
     help="Path to csv filewith training data",
 )
-parser.add_argument("--chunks", default=1, type=int, help="chunks")
+parser.add_argument("--chunks", default=25000, type=int, help="chunks")
 parser.add_argument("--n", type=str, default="test_db")
 parser.add_argument("--debug", default=False, action="store_true")
 parser.add_argument("--debug_ip", default=None, type=str, help="Debug IP")
@@ -38,46 +38,53 @@ base_job_params = {
     "number_of_rolling_jobs": 1,
     "num_nodes": 1,
     "num_gpus": 1,
-    "num_cores": 32,
-    "mem": "32g",
-    "duration": "24h",
-    "gpu_type": "a100",  # || v100 && hname!=cccxc547 && hname!=cccxc572' ,
+    "num_cores": 1,
+    "mem": "128g",
+    "duration": "1h",
+    "gpu_type": "a100",
 }
-# base_command = 'python -m cvar_pyutils.pytorch_utils.launch -m training.main'
-# base_command = 'pyutils-launch -m training.main'
-base_command = "pyutils-run -m aro_clip_lora_eval"
+base_command = "pyutils-run -m training.main"
 
 
-base_params = {}
+base_params = {
+    "train-data": "/dccstor/aarbelle1/data/ConceptualCaptions/CC3M/train_with_cap.csv",
+    # 'val-data': "/dccstor/aarbelle1/data/ConceptualCaptions/CC3M/val_with_cap.csv",
+    # "eval_recall": None,
+    "report-to tensorboard": None,
+    "save-frequency": 5,
+    "csv-img-key": "file",
+    "csv-caption-key": "caption",
+    "warmup": 10000,
+    "batch-size": 128,
+    "lr": 5.0e-4,
+    "wd": 0.1,
+    "epochs": 6,
+    "model": "ViT-B/32",
+    "logs": f"{orig_code_root}/../Outputs",
+    "workers": 32,
+    "beta1": 0.9,
+    "beta2": 0.98,
+    "eps": 1.0e-6,
+    "chunks": args.chunks,
+    "curr_chunk": 0,
+    # "eval_vl_cklist":None,
+    "save-most-recent": None,
+    "zeroshot-frequency": 10,
+}
+experiments = [  # A dict or a tuple of two dicts, the first to expand the base_params dict for run parameters and the second to
+    # expand the base_job_params dict for job submision parameters
+    # create cap anything captions
+    {
+        "name": "create_cap_anything_1",
+        "no_first_eval": None,
+        "create_cap_anything": None,
+        "save_data": None,
+        "batch-size": 1,
+        "pretrained": "openai",
+        "workers": 0,
+    },
+]
 
-
-experiments = []
-# eval_epoch = 5
-eval_epoch = "latest"
-ckpoint = f"checkpoints/epoch_{eval_epoch}.pt"
-root_ck = "/dccstor/sivandov1/dev/open_clip_vl/Outputs"
-# root_ck = '/dccstor/alfassy/dev/open-clip/Outputs/'
-
-models = []
-
-# cvpr paper
-# models.extend(['cc3m_rb_neg','cor_cc3m_both_negs'])
-# blip captions
-# models.extend(['use_only_quality_captions','RB_neg_use_only_quality_captions','rand_both_neg_use_only_quality_captions','use_extra_blip_cap_expanders'])
-# models.extend(['symmetric_avg_pos_features','common_batch_pos_avg_pos_features','kl_pos_avg_pos_features','avg_pos_features'])
-# models.extend(['eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'mb5b32_cap_any_neg_neg_mil', 'cap_any_eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'n_eye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'weye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'weye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'help_eye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'help3_cap_any_eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen'])#neg_mil_gpt_v2_sen
-# models.extend(['merge_llm_dense_cap_alpha_0.1','merge_llm_dense_cap_alpha_0.25','merge_llm_dense_cap_alpha_0.5','merge_llm_dense_cap_alpha_0.75','merge_llm_dense_cap_alpha_0.9',
-# ])
-models.extend(["ones_neg_both_use_extra_blip_cap_expanders"])
-# models.extend(['avg6_use_v2_extra_blip_expanders_additional_data','max6_use_v2_extra_blip_expanders_additional_data'])
-
-
-for i, m in enumerate(models):
-    path = os.path.join(root_ck, m, ckpoint)
-    experiments.append({"name": "eval_aro_" + str(i), "resume": path, "lora": 4})
-
-
-# import  torch.distributed.launch
 for ind, experiment in enumerate(experiments):
     params_, job_params_ = (
         experiment if isinstance(experiment, tuple) else (experiment, {})
@@ -97,9 +104,10 @@ for ind, experiment in enumerate(experiments):
         params["name"] = args.n
         params["workers"] = 0
         params["debug"] = None
+        params["no_first_eval"] = None
     if args.chunks > 1:
         params.pop("name")
-    for curr_chunk in range(args.chunks):
+    for curr_chunk in range(4449, args.chunks):
         if args.chunks > 1:
             job_params["name"] = f"curr_chunk:{curr_chunk}"
         else:

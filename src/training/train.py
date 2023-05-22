@@ -14,12 +14,13 @@ from .distributed import is_master
 from .zero_shot import zero_shot_eval
 from .precision import get_autocast
 from sentence_transformers import SentenceTransformer, util
-from .utils_evlk import clear_pad,average_pos_feat,clear_pad_texts
+from create_expansions.utils_evlk import clear_pad, clear_pad_texts
 from itertools import *
-from .expanders_utils import choose_feat_mil
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.val = 0
         self.avg = 0
@@ -41,13 +42,14 @@ class AverageMeter(object):
 
 
 def unwrap_model(model):
-    if hasattr(model, 'module'):
+    if hasattr(model, "module"):
         return model.module
     else:
         return model
 
-def data_wrapper(args,batch):
-    if 'CC3M' in args.train_data:
+
+def data_wrapper(args, batch):
+    if "CC3M" in args.train_data:
         if args.vl_pos or args.vl_negs:
             if args.mil_gpt:
                 images, texts, info_dict, mil_texts = batch
@@ -61,12 +63,12 @@ def data_wrapper(args,batch):
                 images, texts = batch
                 mil_texts = None
             info_dict = {}
-    elif 'laion' in args.train_data and (args.vl_pos or args.vl_negs):
+    elif "laion" in args.train_data and (args.vl_pos or args.vl_negs):
         images, texts, neg, pos = batch
         info_dict = {"negatives": neg, "positives": pos}
         mil_texts = None
     else:
-        images, texts, neg, pos= batch
+        images, texts, neg, pos = batch
         info_dict = {}
         mil_texts = None
 
@@ -76,16 +78,50 @@ def data_wrapper(args,batch):
     if args.calc_pos_sim:
         text_orig = info_dict.get("text", None)
         text_pos = info_dict.get("positives_text", None)
-        return images, texts, negs, poss, text_orig, text_pos,None,None,mil_texts,False
+        return (
+            images,
+            texts,
+            negs,
+            poss,
+            text_orig,
+            text_pos,
+            None,
+            None,
+            mil_texts,
+            False,
+        )
     if args.avg_pos_features:
         match_list = info_dict.get("match_list", None)
-        match_list,poss,list_amount_of_pos = clear_pad(match_list,poss)
-        return images, texts, negs, poss, None, None, list_amount_of_pos,match_list,mil_texts,False
-    if args.mil_co_loader and texts.shape[1]==100:
+        match_list, poss, list_amount_of_pos = clear_pad(match_list, poss)
+        return (
+            images,
+            texts,
+            negs,
+            poss,
+            None,
+            None,
+            list_amount_of_pos,
+            match_list,
+            mil_texts,
+            False,
+        )
+    if args.mil_co_loader and texts.shape[1] == 100:
         texts, list_amount_of_pos = clear_pad_texts(texts)
-        return images, texts, negs, poss, None, None, list_amount_of_pos, None, None,True
+        return (
+            images,
+            texts,
+            negs,
+            poss,
+            None,
+            None,
+            list_amount_of_pos,
+            None,
+            None,
+            True,
+        )
 
-    return images, texts, negs, poss,None,None,None,None,mil_texts,False
+    return images, texts, negs, poss, None, None, None, None, mil_texts, False
+
 
 def roundrobin(*iterables):
     "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
@@ -101,18 +137,22 @@ def roundrobin(*iterables):
             num_active -= 1
             nexts = cycle(islice(nexts, num_active))
 
-def prepare_data_for_neg_loss(negs,args,device,texts):
+
+def prepare_data_for_neg_loss(negs, args, device, texts):
     negs = negs.to(device=device, non_blocking=True)
     negs = negs.view(-1, negs.shape[-1])
     # clean non-negs that are zero. they r there because not every text has a negative
-    pos_that_have_negs = [i for i, l in enumerate(list(negs[::args.num_negs])) if l.nonzero().any()]
+    pos_that_have_negs = [
+        i for i, l in enumerate(list(negs[:: args.num_negs])) if l.nonzero().any()
+    ]
     negs = [l for l in list(negs) if l.nonzero().any()]
     if len(negs) == 0:
-        pos_that_have_negs=None
+        pos_that_have_negs = None
     else:
         texts = torch.cat((texts, torch.stack(negs)), dim=0)
 
-    return texts,pos_that_have_negs
+    return texts, pos_that_have_negs
+
 
 def prepare_data_for_pos_loss(poss, args, device, texts):
     if args.avg_pos_features:
@@ -122,13 +162,19 @@ def prepare_data_for_pos_loss(poss, args, device, texts):
     texts = torch.cat((poss, texts), dim=0)
     return texts
 
+
 def loop_save_data(data, epoch, args):
-    data['train'].set_epoch(epoch)  # set epoch in process safe manner via sampler or shared_epoch
-    dataloader = data['train'].dataloader
+    data["train"].set_epoch(
+        epoch
+    )  # set epoch in process safe manner via sampler or shared_epoch
+    dataloader = data["train"].dataloader
     for i, batch in enumerate(dataloader):
         continue
 
-def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_writer=None):
+
+def train_one_epoch(
+    model, data, epoch, optimizer, scaler, scheduler, args, tb_writer=None
+):
     device = torch.device(args.device)
     autocast = get_autocast(args.precision)
 
@@ -139,19 +185,24 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
         cache_labels=True,
         rank=args.rank,
         world_size=args.world_size,
-        args=args)
+        args=args,
+    )
     if type(data["train"]) == list:
-        num_batches_per_epoch=0
-        sample_digits=0
-        dataloader=[]
-        for d in data['train']:
-            d.set_epoch(epoch)  # set epoch in process safe manner via sampler or shared_epoch
+        num_batches_per_epoch = 0
+        sample_digits = 0
+        dataloader = []
+        for d in data["train"]:
+            d.set_epoch(
+                epoch
+            )  # set epoch in process safe manner via sampler or shared_epoch
             num_batches_per_epoch += d.dataloader.num_batches
             dataloader.append(d.dataloader)
             sample_digits += math.ceil(math.log(d.dataloader.num_samples + 1, 10))
     else:
-        data['train'].set_epoch(epoch)  # set epoch in process safe manner via sampler or shared_epoch
-        dataloader = data['train'].dataloader
+        data["train"].set_epoch(
+            epoch
+        )  # set epoch in process safe manner via sampler or shared_epoch
+        dataloader = data["train"].dataloader
         num_batches_per_epoch = dataloader.num_batches
         sample_digits = math.ceil(math.log(dataloader.num_samples + 1, 10))
 
@@ -160,14 +211,14 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
     end = time.time()
-    total_time=0
+    total_time = 0
 
     if args.calc_pos_sim:
-        simm_model = SentenceTransformer('all-MiniLM-L6-v2')
+        simm_model = SentenceTransformer("all-MiniLM-L6-v2")
         cosine_score_all = 0
 
     for i, batch in enumerate(dataloader):
-    # for i, batch in enumerate(roundrobin(*dataloader)):
+        # for i, batch in enumerate(roundrobin(*dataloader)):
 
         start_t = time.time()
 
@@ -178,7 +229,18 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
 
         step = num_batches_per_epoch * epoch + i
         scheduler(step)
-        images, texts, negs, poss,text_orig, text_pos,list_amount_of_pos,match_list,mil_texts,is_batch_mil_co_loader_v2 = data_wrapper(args,batch)
+        (
+            images,
+            texts,
+            negs,
+            poss,
+            text_orig,
+            text_pos,
+            list_amount_of_pos,
+            match_list,
+            mil_texts,
+            is_batch_mil_co_loader_v2,
+        ) = data_wrapper(args, batch)
 
         images = images.to(device=device, non_blocking=True)
         texts = texts.to(device=device, non_blocking=True)
@@ -191,16 +253,18 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
             embeddings2 = simm_model.encode(text_pos[0][0], convert_to_tensor=True)
             # Compute cosine-similarities
             cosine_scores = util.cos_sim(embeddings1, embeddings2)
-            cosine_score_all+=cosine_scores
-            if i == (dataloader.num_batches-1) or i%1000 == 0:
-                print(f'{cosine_score_all/(i+1)}')
+            cosine_score_all += cosine_scores
+            if i == (dataloader.num_batches - 1) or i % 1000 == 0:
+                print(f"{cosine_score_all/(i+1)}")
             continue
-        pos_that_have_negs=None
+        pos_that_have_negs = None
         if poss is not None:
             texts = prepare_data_for_pos_loss(poss, args, device, texts)
 
         if negs is not None:
-            texts,pos_that_have_negs = prepare_data_for_neg_loss(negs,args,device,texts)
+            texts, pos_that_have_negs = prepare_data_for_neg_loss(
+                negs, args, device, texts
+            )
         data_time_m.update(time.time() - end)
         # with autocast():
         #     if args.mil_co_loader:
@@ -220,41 +284,59 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
             image_features, text_features, logit_scale = model(images, texts)
             # text_features = average_pos_feat(text_features,list_amount_of_pos,match_list) if args.avg_pos_features else text_features
             # text_features = choose_feat_mil(args, image_features, text_features,logit_scale,list_amount_of_pos) if (args.mil_co_loader and is_batch_mil_co_loader_v2) else text_features
-            total_loss, loss_neg = loss(image_features, text_features, logit_scale, pos_that_have_negs,mil_texts_features,list_amount_of_pos,is_batch_mil_co_loader_v2)
+            total_loss, loss_neg = loss(
+                image_features,
+                text_features,
+                logit_scale,
+                pos_that_have_negs,
+                mil_texts_features,
+                list_amount_of_pos,
+                is_batch_mil_co_loader_v2,
+            )
         if epoch < args.warmup_ep:
-            total_loss = total_loss*0.
+            total_loss = total_loss * 0.0
 
         if scaler is not None:
             scaler.scale(total_loss).backward()
             if args.norm_gradient_clip is not None:
                 scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.norm_gradient_clip, norm_type=2.0)
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(), args.norm_gradient_clip, norm_type=2.0
+                )
             scaler.step(optimizer)
             scaler.update()
         else:
             total_loss.backward()
             if args.norm_gradient_clip is not None:
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.norm_gradient_clip, norm_type=2.0)
+                torch.nn.utils.clip_grad_norm_(
+                    model.parameters(), args.norm_gradient_clip, norm_type=2.0
+                )
             optimizer.step()
 
         # Note: we clamp to 4.6052 = ln(100), as in the original paper.
         with torch.no_grad():
             unwrap_model(model).logit_scale.clamp_(0, math.log(100))
 
-
-        total_time = total_time + time.time()-start_t
+        total_time = total_time + time.time() - start_t
 
         batch_time_m.update(time.time() - end)
         end = time.time()
         batch_count = i + 1
 
-
-        if is_master(args) and args.ZS_steps_eval and (epoch >= args.warmup_ep and epoch >= args.warmup_ep_no_bn_update) and i % args.ZS_freq == 0:
+        if (
+            is_master(args)
+            and args.ZS_steps_eval
+            and (epoch >= args.warmup_ep and epoch >= args.warmup_ep_no_bn_update)
+            and i % args.ZS_freq == 0
+        ):
             logging.info(f"eval batch {batch_count}")
             evaluate(model, data, batch_count, args, tb_writer)
 
-
-        if is_master(args) and ((i % 100 == 0 and not type(data["train"]) == list) or (i % 100 == 1 and type(data["train"]) == list) or batch_count == num_batches_per_epoch):
+        if is_master(args) and (
+            (i % 100 == 0 and not type(data["train"]) == list)
+            or (i % 100 == 1 and type(data["train"]) == list)
+            or batch_count == num_batches_per_epoch
+        ):
             # samples_per_epoch = 0
             # batch_size = 0
             # try:
@@ -290,8 +372,10 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
                 "loss": loss_m.val,
                 "data_time": data_time_m.val,
                 "batch_time": batch_time_m.val,
-                "samples_per_scond": args.batch_size*args.world_size / batch_time_m.val,
-                "scale":  logit_scale_scalar,
+                "samples_per_scond": args.batch_size
+                * args.world_size
+                / batch_time_m.val,
+                "scale": logit_scale_scalar,
                 "lr": optimizer.param_groups[0]["lr"],
                 "loss_neg": loss_neg_m.val,
             }
@@ -306,7 +390,6 @@ def train_one_epoch(model, data, epoch, optimizer, scaler, scheduler, args, tb_w
     # end for
 
 
-
 def evaluate(model, data, epoch, args, tb_writer=None):
     metrics = {}
     if not is_master(args):
@@ -319,9 +402,11 @@ def evaluate(model, data, epoch, args, tb_writer=None):
 
     autocast = get_autocast(args.precision)
 
-
-    if 'val' in data and (args.val_frequency and ((epoch % args.val_frequency) == 0 or epoch == args.epochs)):
-        dataloader = data['val'].dataloader
+    if "val" in data and (
+        args.val_frequency
+        and ((epoch % args.val_frequency) == 0 or epoch == args.epochs)
+    ):
+        dataloader = data["val"].dataloader
         num_samples = 0
         samples_per_val = dataloader.num_samples
 
@@ -335,7 +420,6 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                     images, texts, _ = batch
                 else:
                     images, texts = batch
-
 
                 images = images.to(device=device, non_blocking=True)
                 texts = texts.to(device=device, non_blocking=True)
@@ -353,8 +437,8 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                     batch_size = images.shape[0]
                     labels = torch.arange(batch_size, device=device).long()
                     total_loss = (
-                        F.cross_entropy(logits_per_image, labels) +
-                        F.cross_entropy(logits_per_text, labels)
+                        F.cross_entropy(logits_per_image, labels)
+                        + F.cross_entropy(logits_per_text, labels)
                     ) / 2
 
                 cumulative_loss += total_loss * batch_size
@@ -362,7 +446,8 @@ def evaluate(model, data, epoch, args, tb_writer=None):
                 if is_master(args) and (i % 100) == 0:
                     logging.info(
                         f"Eval Epoch: {epoch} [{num_samples} / {samples_per_val}]\t"
-                        f"Loss: {cumulative_loss / num_samples:.6f}\t")
+                        f"Loss: {cumulative_loss / num_samples:.6f}\t"
+                    )
 
             val_metrics = get_metrics(
                 image_features=torch.cat(all_image_features),
@@ -371,7 +456,12 @@ def evaluate(model, data, epoch, args, tb_writer=None):
             )
             loss = cumulative_loss / num_samples
             metrics.update(
-                {**val_metrics, "val_loss": loss.item(), "epoch": epoch, "num_samples": num_samples}
+                {
+                    **val_metrics,
+                    "val_loss": loss.item(),
+                    "epoch": epoch,
+                    "num_samples": num_samples,
+                }
             )
 
     if not metrics:

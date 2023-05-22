@@ -13,7 +13,8 @@ import os
 import json
 import seaborn as sns
 
-def radar_factory(num_vars, frame='circle'):
+
+def radar_factory(num_vars, frame="circle"):
     """Create a radar chart with `num_vars` axes.
     This function creates a RadarAxes projection and registers it.
     Parameters
@@ -27,13 +28,12 @@ def radar_factory(num_vars, frame='circle'):
     theta = np.linspace(0, 2 * np.pi, num_vars, endpoint=False)
 
     class RadarAxes(PolarAxes):
-
-        name = 'radar'
+        name = "radar"
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             # rotate plot such that the first axis is at the top
-            self.set_theta_zero_location('N')
+            self.set_theta_zero_location("N")
 
         def fill(self, *args, closed=True, **kwargs):
             """Override fill so that line is closed by default"""
@@ -59,52 +59,61 @@ def radar_factory(num_vars, frame='circle'):
         def _gen_axes_patch(self):
             # The Axes patch must be centered at (0.5, 0.5) and of radius 0.5
             # in axes coordinates.
-            if frame == 'circle':
+            if frame == "circle":
                 return Circle((0.5, 0.5), 0.5)
-            elif frame == 'polygon':
-                return RegularPolygon((0.5, 0.5), num_vars,
-                                      radius=.5, edgecolor="k")
+            elif frame == "polygon":
+                return RegularPolygon((0.5, 0.5), num_vars, radius=0.5, edgecolor="k")
             else:
                 raise ValueError("unknown value for 'frame': %s" % frame)
 
         def draw(self, renderer):
-            """ Draw. If frame is polygon, make gridlines polygon-shaped """
-            if frame == 'polygon':
+            """Draw. If frame is polygon, make gridlines polygon-shaped"""
+            if frame == "polygon":
                 gridlines = self.yaxis.get_gridlines()
                 for gl in gridlines:
                     gl.get_path()._interpolation_steps = num_vars
             super().draw(renderer)
 
         def _gen_axes_spines(self):
-            if frame == 'circle':
+            if frame == "circle":
                 return super()._gen_axes_spines()
-            elif frame == 'polygon':
+            elif frame == "polygon":
                 # spine_type must be 'left'/'right'/'top'/'bottom'/'circle'.
-                spine = Spine(axes=self,
-                              spine_type='circle',
-                              path=Path.unit_regular_polygon(num_vars))
+                spine = Spine(
+                    axes=self,
+                    spine_type="circle",
+                    path=Path.unit_regular_polygon(num_vars),
+                )
                 # unit_regular_polygon gives a polygon of radius 1 centered at
                 # (0, 0) but we want a polygon of radius 0.5 centered at (0.5,
                 # 0.5) in axes coordinates.
-                spine.set_transform(Affine2D().scale(.5).translate(.5, .5)
-                                    + self.transAxes)
+                spine.set_transform(
+                    Affine2D().scale(0.5).translate(0.5, 0.5) + self.transAxes
+                )
 
-                return {'polar': spine}
+                return {"polar": spine}
             else:
                 raise ValueError("unknown value for 'frame': %s" % frame)
 
     register_projection(RadarAxes)
     return theta
 
+
 class Radar(object):
-    def __init__(self, figure, title,limits,start_radar, rect=None):
+    def __init__(self, figure, title, limits, start_radar, rect=None):
         if rect is None:
             rect = [0.05, 0.05, 0.9, 0.9]
 
         self.n = len(title)
-        self.angles = [a if a <=360. else a - 360. for a in np.arange(90, 90+360, 360.0/self.n)]
+        self.angles = [
+            a if a <= 360.0 else a - 360.0
+            for a in np.arange(90, 90 + 360, 360.0 / self.n)
+        ]
         self.limits = limits
-        self.axes = [figure.add_axes(rect, projection='polar', label='axes%d' % i) for i in range(self.n)]
+        self.axes = [
+            figure.add_axes(rect, projection="polar", label="axes%d" % i)
+            for i in range(self.n)
+        ]
         self.start_radar = start_radar
         self.ax = self.axes[0]
         self.ax.set_thetagrids(self.angles, labels=title, fontsize=17)
@@ -121,11 +130,10 @@ class Radar(object):
             ticks = [(limit / self.n_ticks) * i for i in range(self.n_ticks + 1)]
             ax.set_rgrids(ticks, angle=angle, label=ticks)
 
-            ax.spines['polar'].set_visible(False)
+            ax.spines["polar"].set_visible(False)
             ax.set_ylim(self.start_radar, limit)  # limit
 
-
-    def plot(self, values,color, alpha,label,limits):
+    def plot(self, values, color, alpha, label, limits):
         limits = np.array(limits)
         # Hacky way to adjust for the first scale which apparently
         # is leading...
@@ -133,12 +141,34 @@ class Radar(object):
         values[1:] = (values[1:] / limits[1:]) * limits[0]
         angle = np.deg2rad(np.r_[self.angles, self.angles[0]])
         values = np.r_[values, values[0]]
-        self.ax.plot(angle, values,"-", lw=2,color=color,alpha=alpha, label=label,)
-        self.ax.legend(loc="right", bbox_to_anchor=(1, 1), )
-        self.ax.fill(angle, values, color=color,alpha=alpha)
+        self.ax.plot(
+            angle,
+            values,
+            "-",
+            lw=2,
+            color=color,
+            alpha=alpha,
+            label=label,
+        )
+        self.ax.legend(
+            loc="right",
+            bbox_to_anchor=(1, 1),
+        )
+        self.ax.fill(angle, values, color=color, alpha=alpha)
 
 
-def zs_generate_chart(args,output_folder,corpus_path,task,chart_type,models,name,ep_eval,radar_legends,start_radar):
+def zs_generate_chart(
+    args,
+    output_folder,
+    corpus_path,
+    task,
+    chart_type,
+    models,
+    name,
+    ep_eval,
+    radar_legends,
+    start_radar,
+):
     """
     output_folder : str
         The path of folder that saves all evaluation results.
@@ -151,25 +181,30 @@ def zs_generate_chart(args,output_folder,corpus_path,task,chart_type,models,name
     models : list
         List of model name.
     """
-    m = json.load(open('training/'+corpus_path))
+    m = json.load(open("training/" + corpus_path))
     arrs = []
-    model_data_radar=[]
-    colors = [(1.0, 0.4980392156862745, 0.054901960784313725),(0.12156862745098039, 0.4666666666666667, 0.7058823529411765), (0.17254901960784313, 0.6274509803921569, 0.17254901960784313),(0.8392156862745098, 0.15294117647058825, 0.1568627450980392)]
+    model_data_radar = []
+    colors = [
+        (1.0, 0.4980392156862745, 0.054901960784313725),
+        (0.12156862745098039, 0.4666666666666667, 0.7058823529411765),
+        (0.17254901960784313, 0.6274509803921569, 0.17254901960784313),
+        (0.8392156862745098, 0.15294117647058825, 0.1568627450980392),
+    ]
     if radar_legends:
         legends = radar_legends
     else:
         legends = models
     for model in models:
         per_data_radar = {
-            'vg': [0] * m.__len__(),
-            'vaw': [0] * m.__len__(),
-            'swig': [0] * m.__len__(),
-            'hake': [0] * m.__len__(),
+            "vg": [0] * m.__len__(),
+            "vaw": [0] * m.__len__(),
+            "swig": [0] * m.__len__(),
+            "hake": [0] * m.__len__(),
         }
-        filepath = os.path.join(output_folder,model)
+        filepath = os.path.join(output_folder, model)
         score_list = []
-        if model == 'clip' or model =='cc3m_no_training_vit16_assaf':
-            ep=0
+        if model == "clip" or model == "cc3m_no_training_vit16_assaf":
+            ep = 0
         else:
             ep = ep_eval
         for ind, item in enumerate(m.keys()):
@@ -179,19 +214,23 @@ def zs_generate_chart(args,output_folder,corpus_path,task,chart_type,models,name
                 score = 0
                 file_num = len(m[item][data])
                 for file in m[item][data]:
-                    if ep=='all':
-                        json_file_name = [f for f in os.listdir(filepath) if f.startswith(file)][0]
+                    if ep == "all":
+                        json_file_name = [
+                            f for f in os.listdir(filepath) if f.startswith(file)
+                        ][0]
                         json_name = os.path.join(filepath, json_file_name)
                     else:
-                        json_name = os.path.join(filepath,f"{file}_{ep}.json")
+                        json_name = os.path.join(filepath, f"{file}_{ep}.json")
                         if not os.path.exists(json_name):
-                            print(f"{file}_{ep}.json has not been evaluated. model name: {model}")
+                            print(
+                                f"{file}_{ep}.json has not been evaluated. model name: {model}"
+                            )
                             return
                     m1 = json.load(open(json_name))
                     score += m1["total_acc"]
-                per_data_radar[data][ind] = score/file_num
-                data_score.append(score/file_num)
-            score_list.append(sum(data_score)/data_num)
+                per_data_radar[data][ind] = score / file_num
+                data_score.append(score / file_num)
+            score_list.append(sum(data_score) / data_num)
         # for z in [5,1]:
         #     json_name = os.path.join(filepath, f"top{z}_zs_{ep}.json")
         #     m1 = json.load(open(json_name))
@@ -200,8 +239,8 @@ def zs_generate_chart(args,output_folder,corpus_path,task,chart_type,models,name
 
         arrs.append(score_list)
         model_data_radar.append(per_data_radar)
-        print(f'{model} {score_list}')
-    print('')
+        print(f"{model} {score_list}")
+    print("")
 
     # fig_ = plt.figure(figsize=(8, 8))
     # data = [['A-Color', 'A-Material', 'A-Size',

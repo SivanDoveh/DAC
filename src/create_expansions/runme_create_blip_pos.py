@@ -7,14 +7,9 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--print_only",
-    default=False,
-    action="store_true",
-    help="Path to csv filewith training data",
-)
-parser.add_argument("--chunks", default=1, type=int, help="chunks")
-parser.add_argument("--n", type=str, default="test_db")
+parser.add_argument("--print_only", default=False, action="store_true")
+parser.add_argument("--chunks", default=1000, type=int, help="chunks")
+parser.add_argument("--n", type=str, default="test_debug")
 parser.add_argument("--debug", default=False, action="store_true")
 parser.add_argument("--debug_ip", default=None, type=str, help="Debug IP")
 parser.add_argument("--debug_port", default=12345, type=str, help="Debug Port")
@@ -35,48 +30,56 @@ if not print_only and copy_code_to_tmp:
     os.chdir(tmp_root)
 
 base_job_params = {
-    "number_of_rolling_jobs": 1,
+    "number_of_rolling_jobs": 2,
     "num_nodes": 1,
     "num_gpus": 1,
-    "num_cores": 32,
+    "num_cores": 1,
     "mem": "32g",
-    "duration": "24h",
-    "gpu_type": "a100",  # || v100 && hname!=cccxc547 && hname!=cccxc572' ,
+    "duration": "1h",
+    "gpu_type": "a100 || v100",
+    "project_name": "EVLK",
 }
 # base_command = 'python -m cvar_pyutils.pytorch_utils.launch -m training.main'
 # base_command = 'pyutils-launch -m training.main'
-base_command = "pyutils-run -m aro_clip_lora_eval"
+base_command = "pyutils-run -m training.main"
 
 
-base_params = {}
-
-
-experiments = []
-# eval_epoch = 5
-eval_epoch = "latest"
-ckpoint = f"checkpoints/epoch_{eval_epoch}.pt"
-root_ck = "/dccstor/sivandov1/dev/open_clip_vl/Outputs"
-# root_ck = '/dccstor/alfassy/dev/open-clip/Outputs/'
-
-models = []
-
-# cvpr paper
-# models.extend(['cc3m_rb_neg','cor_cc3m_both_negs'])
-# blip captions
-# models.extend(['use_only_quality_captions','RB_neg_use_only_quality_captions','rand_both_neg_use_only_quality_captions','use_extra_blip_cap_expanders'])
-# models.extend(['symmetric_avg_pos_features','common_batch_pos_avg_pos_features','kl_pos_avg_pos_features','avg_pos_features'])
-# models.extend(['eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'mb5b32_cap_any_neg_neg_mil', 'cap_any_eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'n_eye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'weye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen', 'weye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'help_eye_neg_b_32_mb_5_vl_and_neg_mil_gpt_v2_sen', 'help3_cap_any_eye_neg_mb_2_vl_and_neg_mil_gpt_v2_sen'])#neg_mil_gpt_v2_sen
-# models.extend(['merge_llm_dense_cap_alpha_0.1','merge_llm_dense_cap_alpha_0.25','merge_llm_dense_cap_alpha_0.5','merge_llm_dense_cap_alpha_0.75','merge_llm_dense_cap_alpha_0.9',
-# ])
-models.extend(["ones_neg_both_use_extra_blip_cap_expanders"])
-# models.extend(['avg6_use_v2_extra_blip_expanders_additional_data','max6_use_v2_extra_blip_expanders_additional_data'])
-
-
-for i, m in enumerate(models):
-    path = os.path.join(root_ck, m, ckpoint)
-    experiments.append({"name": "eval_aro_" + str(i), "resume": path, "lora": 4})
-
-
+base_params = {
+    "train-data": "/dccstor/aarbelle1/data/ConceptualCaptions/CC3M/train_with_cap.csv",
+    "val-data": "/dccstor/aarbelle1/data/ConceptualCaptions/CC3M/val_with_cap.csv",
+    "eval_recall": None,
+    "report-to tensorboard": None,
+    "save-frequency": 20,
+    "csv-img-key": "file",
+    "csv-caption-key": "caption",
+    "warmup": 10000,
+    "batch-size": 1,
+    "lr": 5.0e-4,
+    "wd": 0.1,
+    "epochs": 30,
+    "model": "ViT-B/32",
+    "logs": f"{orig_code_root}/../Outputs",
+    "workers": 0,
+    "beta1": 0.9,
+    "beta2": 0.98,
+    "eps": 1.0e-6,
+    # 'pretrained':'openai',
+    "chunks": args.chunks,
+    "curr_chunk": 0,
+}
+experiments = [  # A dict or a tuple of two dicts, the first to expand the base_params dict for run parameters and the second to
+    # expand the base_job_params dict for job submision parameters
+    # {'name': 'save_pos_qm', "vl_pos": None, 'no_first_eval': None,'save_pos':None,'CC3M_positivies_folder':'/dccstor/sivandov1/data/qm_positives_cc3m','batch-size': 1,'pretrained': 'openai'},
+    # {'name': 'create_blip2_cap','no_first_eval': None, 'create_blip2_cap': None,'save_data':None, 'batch-size': 1, 'pretrained': 'openai'},
+    {
+        "name": "create_blip1_cap",
+        "no_first_eval": None,
+        "create_blip1_cap": None,
+        "save_data": None,
+        "batch-size": 4,
+        "pretrained": "openai",
+    },
+]
 # import  torch.distributed.launch
 for ind, experiment in enumerate(experiments):
     params_, job_params_ = (
@@ -95,16 +98,16 @@ for ind, experiment in enumerate(experiments):
     job_params["name"] = params["name"]
     if print_only:
         params["name"] = args.n
-        params["workers"] = 0
-        params["debug"] = None
     if args.chunks > 1:
         params.pop("name")
     for curr_chunk in range(args.chunks):
         if args.chunks > 1:
             job_params["name"] = f"curr_chunk:{curr_chunk}"
+            params["curr_chunk"] = curr_chunk
         else:
             job_params["name"] = f'{job_params["name"]}'
-        params["curr_chunk"] = curr_chunk
+        # curr_chunk = str(curr_chunk).zfill(5)
+        # params['train-data'] = f'"/dataset/laion/tar_files/{curr_chunk}.tar"'
         cmnd = dict2params_cl(params, base_command)
         if not print_only:
             all_job_ids, all_job_outputs = submit_dependant_jobs(

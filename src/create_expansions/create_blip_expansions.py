@@ -6,26 +6,31 @@ import pickle
 import torch
 import json
 import os
+
 os.umask(0)
-parser = argparse.ArgumentParser(description='SAMPLE DESCRIPTIONS USING LLMs')
-parser.add_argument('--start_idx', default=0, type=int,
-                    help='start index')
+parser = argparse.ArgumentParser(description="SAMPLE DESCRIPTIONS USING LLMs")
+parser.add_argument("--start_idx", default=0, type=int, help="start index")
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     args = parser.parse_args()
 
     start_idx = args.start_idx
     print("start_idx", start_idx)
 
-    generator = pipeline('text-generation', model='EleutherAI/gpt-neo-2.7B', device=0)
+    generator = pipeline("text-generation", model="EleutherAI/gpt-neo-2.7B", device=0)
 
-    pending_captions_cc3m = pickle.load(open("/dccstor/leonidka1/data/cc3m_LLM_outputs/blip2_positives_cc3m_gpt_extra/all_files_in_blip2_positive_cc3m_folder.p", "rb"))
-    pending_captions_cc3m_subset = pending_captions_cc3m[start_idx:start_idx + 1000]
+    pending_captions_cc3m = pickle.load(
+        open(
+            "/dccstor/leonidka1/data/cc3m_LLM_outputs/blip2_positives_cc3m_gpt_extra/all_files_in_blip2_positive_cc3m_folder.p",
+            "rb",
+        )
+    )
+    pending_captions_cc3m_subset = pending_captions_cc3m[start_idx : start_idx + 1000]
 
     for json_file_name in pending_captions_cc3m_subset:
-        clean_json_file_name = json_file_name.replace(".json", "").replace("/dccstor/sivandov1/data/blip2_positives_cc3m/",
-                                                                     "")
+        clean_json_file_name = json_file_name.replace(".json", "").replace(
+            "/dccstor/sivandov1/data/blip2_positives_cc3m/", ""
+        )
         file_path = f"/dccstor/sivandov1/data/evlk/v2_BLIP_GPT_NEO_text_expander/{clean_json_file_name}.txt"
         if os.path.isfile(file_path):
             print(f"file already exists {file_path}")
@@ -33,7 +38,7 @@ if __name__ == '__main__':
         # read JSON file
         with open(json_file_name) as f:
             data = json.load(f)
-        short_description = data['positive_caption'][0]
+        short_description = data["positive_caption"][0]
         input_text = f"short: please describe what you might see in a picture of a scene that contains 'a Christmas tree', write each sentence in a list, and use complete sentences with all nouns and objects you are referring to\n \
                 long: 	1	In the center of the room, a majestic evergreen Christmas tree stands tall, adorned with twinkling lights and colorful ornaments.\n \
         	2	Delicate strands of tinsel gracefully drape the tree's branches, adding a touch of shimmer to the festive display.\n \
@@ -70,18 +75,15 @@ if __name__ == '__main__':
                 short: please describe what you might see in a picture of a scene that contains '{short_description}', write each sentence in a list, and use complete sentences with all nouns and objects you are referring to \n \
                 long: "
 
-        res = generator(input_text, do_sample=True, max_length=len(input_text.split()) + 800,
-                        min_length=len(input_text.split()) + 600)
-        long_description_out = res[0]['generated_text'].replace(input_text, "")
+        res = generator(
+            input_text,
+            do_sample=True,
+            max_length=len(input_text.split()) + 800,
+            min_length=len(input_text.split()) + 600,
+        )
+        long_description_out = res[0]["generated_text"].replace(input_text, "")
 
-        f = open(
-            file_path,
-            "w")
+        f = open(file_path, "w")
         # f.write(f"{short_description}\n")
         f.write(f"{long_description_out}\n")
         f.close()
-
-
-
-
-

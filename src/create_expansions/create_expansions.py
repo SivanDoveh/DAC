@@ -5,24 +5,27 @@ import pickle
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='SAMPLE DESCRIPTIONS USING LLMs')
-parser.add_argument('--start_idx', default=0, type=int,
-                    help='start index')
+parser = argparse.ArgumentParser(description="SAMPLE DESCRIPTIONS USING LLMs")
+parser.add_argument("--start_idx", default=0, type=int, help="start index")
 args = parser.parse_args()
 
 start_idx = args.start_idx
-print ("start_idx", start_idx)
+print("start_idx", start_idx)
 
-generator = pipeline('text-generation', model='EleutherAI/gpt-neo-2.7B', device=0)
+generator = pipeline("text-generation", model="EleutherAI/gpt-neo-2.7B", device=0)
 
-cc_image_labels_tsv = pd.read_csv('/dccstor/leonidka1/data/cc3m_LLM_outputs/image_labels.tsv', sep='\t', header=None)
-df = cc_image_labels_tsv.iloc[start_idx:start_idx+1000]
+cc_image_labels_tsv = pd.read_csv(
+    "/dccstor/leonidka1/data/cc3m_LLM_outputs/image_labels.tsv", sep="\t", header=None
+)
+df = cc_image_labels_tsv.iloc[start_idx : start_idx + 1000]
 
 # missing_cc3m_idx = pickle.load( open( "missing_cc3m_idx.p", "rb" ) )
 # df = cc_image_labels_tsv.iloc[missing_cc3m_idx[start_idx:start_idx+20000]]
 
 for index, row in df.iterrows():
-    file_path = f"/dccstor/leonidka1/data/cc3m_LLM_outputs/GPT_NEO_LIST_DESC/{index}.txt"
+    file_path = (
+        f"/dccstor/leonidka1/data/cc3m_LLM_outputs/GPT_NEO_LIST_DESC/{index}.txt"
+    )
     if os.path.isfile(file_path):
         print(f"file already exists {file_path}")
         continue
@@ -90,10 +93,17 @@ for index, row in df.iterrows():
         short: please describe what you might see in a picture of a scene that contains '{short_description}', write each sentence in a list, and use complete sentences with all nouns and objects you are referring to \n \
         long: "
 
-    res = generator(input_text, do_sample=True, max_length=len(input_text.split())+800, min_length=len(input_text.split())+600)
-    long_description_out = res[0]['generated_text'].replace(input_text, "")
+    res = generator(
+        input_text,
+        do_sample=True,
+        max_length=len(input_text.split()) + 800,
+        min_length=len(input_text.split()) + 600,
+    )
+    long_description_out = res[0]["generated_text"].replace(input_text, "")
 
-    f = open(f"/dccstor/leonidka1/data/cc3m_LLM_outputs/GPT_NEO_LIST_DESC/{index}.txt", "w")
+    f = open(
+        f"/dccstor/leonidka1/data/cc3m_LLM_outputs/GPT_NEO_LIST_DESC/{index}.txt", "w"
+    )
     f.write(f"{short_description}\n")
     f.write(f"{long_description_out}\n")
     f.close()

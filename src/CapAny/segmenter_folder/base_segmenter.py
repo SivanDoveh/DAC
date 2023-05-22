@@ -10,10 +10,12 @@ import PIL
 
 
 class BaseSegmenter:
-    def __init__(self, device, checkpoint, model_type='vit_h', reuse_feature=True, model=None):
+    def __init__(
+        self, device, checkpoint, model_type="vit_h", reuse_feature=True, model=None
+    ):
         print(f"Initializing BaseSegmenter to {device}")
         self.device = device
-        self.torch_dtype = torch.float16 if 'cuda' in device else torch.float32
+        self.torch_dtype = torch.float16 if "cuda" in device else torch.float32
         self.processor = None
         self.model_type = model_type
         if model is None:
@@ -76,9 +78,11 @@ class BaseSegmenter:
 
         """
         image = self.read_image(image)  # Turn image into np.ndarray
-        if 'everything' in control['prompt_type']:
+        if "everything" in control["prompt_type"]:
             masks = self.mask_generator.generate(image)
-            new_masks = np.concatenate([mask["segmentation"][np.newaxis, :] for mask in masks])
+            new_masks = np.concatenate(
+                [mask["segmentation"][np.newaxis, :] for mask in masks]
+            )
             return new_masks
         else:
             if not self.reuse_feature or self.image_embedding is None:
@@ -88,16 +92,18 @@ class BaseSegmenter:
                 assert self.image_embedding is not None
                 self.predictor.features = self.image_embedding
 
-        if 'mutimask_output' in control:
+        if "mutimask_output" in control:
             masks, scores, logits = self.predictor.predict(
-                point_coords=np.array(control['input_point']),
-                point_labels=np.array(control['input_label']),
+                point_coords=np.array(control["input_point"]),
+                point_labels=np.array(control["input_label"]),
                 multimask_output=True,
             )
-        elif 'input_boxes' in control:
+        elif "input_boxes" in control:
             transformed_boxes = self.predictor.transform.apply_boxes_torch(
                 torch.tensor(control["input_boxes"], device=self.predictor.device),
-                image.shape[1::-1]  # Reverse shape because numpy is (W, H) and function need (H, W)
+                image.shape[
+                    1::-1
+                ],  # Reverse shape because numpy is (W, H) and function need (H, W)
             )
             masks, _, _ = self.predictor.predict_torch(
                 point_coords=None,
@@ -108,9 +114,21 @@ class BaseSegmenter:
             masks = masks.squeeze(1).cpu().numpy()
 
         else:
-            input_point = np.array(control['input_point']) if 'click' in control['prompt_type'] else None
-            input_label = np.array(control['input_label']) if 'click' in control['prompt_type'] else None
-            input_box = np.array(control['input_box']) if 'box' in control['prompt_type'] else None
+            input_point = (
+                np.array(control["input_point"])
+                if "click" in control["prompt_type"]
+                else None
+            )
+            input_label = (
+                np.array(control["input_label"])
+                if "click" in control["prompt_type"]
+                else None
+            )
+            input_box = (
+                np.array(control["input_box"])
+                if "box" in control["prompt_type"]
+                else None
+            )
 
             masks, scores, logits = self.predictor.predict(
                 point_coords=input_point,
@@ -119,7 +137,7 @@ class BaseSegmenter:
                 multimask_output=False,
             )
 
-            if 0 in control['input_label']:
+            if 0 in control["input_label"]:
                 mask_input = logits[np.argmax(scores), :, :]
                 masks, scores, logits = self.predictor.predict(
                     point_coords=input_point,
@@ -133,7 +151,7 @@ class BaseSegmenter:
 
 
 if __name__ == "__main__":
-    image_path = 'segmenter/images/truck.jpg'
+    image_path = "segmenter/images/truck.jpg"
     prompts = [
         # {
         #     "prompt_type":["click"],
@@ -168,22 +186,22 @@ if __name__ == "__main__":
 
     init_time = time.time()
     segmenter = BaseSegmenter(
-        device='cuda',
+        device="cuda",
         # checkpoint='sam_vit_h_4b8939.pth',
-        checkpoint='segmenter/sam_vit_h_4b8939.pth',
-        model_type='vit_h',
-        reuse_feature=True
+        checkpoint="segmenter/sam_vit_h_4b8939.pth",
+        model_type="vit_h",
+        reuse_feature=True,
     )
-    print(f'init time: {time.time() - init_time}')
+    print(f"init time: {time.time() - init_time}")
 
-    image_path = 'test_img/img2.jpg'
+    image_path = "test_img/img2.jpg"
     infer_time = time.time()
     for i, prompt in enumerate(prompts):
         print(f'{prompt["prompt_type"]} mode')
         image = Image.open(image_path)
         segmenter.set_image(np.array(image))
         masks = segmenter.inference(np.array(image), prompt)
-        Image.fromarray(masks[0]).save('seg.png')
+        Image.fromarray(masks[0]).save("seg.png")
         print(masks.shape)
 
-    print(f'infer time: {time.time() - infer_time}')
+    print(f"infer time: {time.time() - infer_time}")
