@@ -10,12 +10,10 @@ import braceexpand
 import numpy as np
 import pandas as pd
 import torch
-import torchvision.datasets as datasets
 import webdataset as wds
 from PIL import Image
 from torch.utils.data import (
     Dataset,
-    SubsetRandomSampler,
     IterableDataset,
     get_worker_info,
 )

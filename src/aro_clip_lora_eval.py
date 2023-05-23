@@ -117,7 +117,7 @@ if __name__ == "__main__":
         print("no checkpoint")
         args.resume = "Output_no_checkpoint/"
     model.eval()
-    root_root_dir = "/dccstor/sivandov1/data/evlk/aro/"
+    root_root_dir = "../aro/"
     root_dir = f"{root_root_dir}datasets"
     vgr_dataset = VG_Relation(
         image_preprocess=image_preprocess, download=True, root_dir=root_dir

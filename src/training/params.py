@@ -344,19 +344,19 @@ def parse_args():
     parser.add_argument(
         "--vl_checklist_accuracy_jsons_folder",
         type=str,
-        default="/dccstor/sivandov1/dev/open_clip_vl/eval_jsons_correct/clip/",
+        default=" ",
         help="vl_checklist_accuracy_jsons_folder",
     )
     parser.add_argument(
         "--vl_checklist_images_root_folder",
         type=str,
-        default="/dccstor/sivandov1/data/vl_datasets",
+        default=" ",
         help="vl_checklist_images_root_folder",
     )
     parser.add_argument(
         "--vl_checklist_jsons_with_phrases_to_images_root_folder",
         type=str,
-        default="/dccstor/sivandov1/dev/open_clip_vl/vl_checklist_annot_data/",
+        default=" ",
         help="vl_checklist_jsons_with_phrases_to_images_root_folder",
     )
     parser.add_argument(
@@ -552,7 +552,6 @@ def parse_args():
         type=str,
     )
 
-    # evlk train
     parser.add_argument(
         "--blip_cap",
         default=False,
@@ -600,35 +599,36 @@ def parse_args():
     parser.add_argument(
         "--path_extra_cc3m_expanders",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/GPT_NEO_text_expander",
+        default=" ",
     )
     parser.add_argument(
         "--path_extra_blip_cap_expanders",
         type=str,
-        default="/dccstor/leonidka1/data/cc3m_LLM_outputs/blip2_positives_cc3m_gpt_extra/GPT_NEO",
+        default=" ",
     )
 
     parser.add_argument(
         "--path_extra_cc3m_expanders_sen",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/GPT_NEO_text_expander_divided_to_sentences/",
+        default=" ",
     )
     parser.add_argument(
         "--path_extra_blip_cap_expanders_sen",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/BLIP_GPT_NEO_divided_to_sentences",
+        default=" ",
     )
 
     parser.add_argument(
         "--path_extra_cc3m_expanders_itm_scores_sentences",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/itm_GPT_NEO_text_expander_divided_to_sentences/",
+        default=" ",
     )
     parser.add_argument(
         "--path_extra_blip_cap_expanders_itm_scores_sentences",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/itm_BLIP_GPT_NEO_divided_to_sentences",
+        default=" ",
     )
+
     parser.add_argument(
         "--kqv_lora",
         default=False,
@@ -667,7 +667,7 @@ def parse_args():
     parser.add_argument(
         "--v2_path_extra_cc3m_expanders",
         type=str,
-        default="/dccstor/leonidka1/data/cc3m_LLM_outputs/GPT_NEO_LIST_DESC/",
+        default=" ",
     )
     parser.add_argument("--v2_path_extra_cc3m_expanders_sen", type=str, default="")
     parser.add_argument(
@@ -681,22 +681,22 @@ def parse_args():
     parser.add_argument(
         "--v2_path_extra_blip_cap_expanders",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/v2_BLIP_GPT_NEO_text_expander/",
+        default=" ",
     )
     parser.add_argument(
         "--v2_path_extra_blip_cap_expanders_sen",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/v2_BLIP_GPT_NEO_text_expander_sen/",
+        default=" ",
     )
     parser.add_argument(
         "--v2_path_extra_blip_expanders_noun",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/v2_BLIP_GPT_NEO_text_expander_sen_noun/",
+        default=" ",
     )
     parser.add_argument(
         "--v2_path_extra_blip_expanders_adj",
         type=str,
-        default="/dccstor/sivandov1/data/evlk/v2_BLIP_GPT_NEO_text_expander_sen_adj/",
+        default=" ",
     )
     parser.add_argument(
         "--use_v2_extra_blip_expanders",

@@ -397,8 +397,8 @@ class SAM_class(object):
         device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
         self.args = args
         self.device = device
-        from CapAny.segmenter_folder import BaseSegmenter
-        from CapAny.captioner import build_captioner
+        from SAM.segmenter_folder import BaseSegmenter
+        from SAM.captioner import build_captioner
 
         self.segmenter = BaseSegmenter(
             device="cuda",

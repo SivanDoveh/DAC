@@ -203,7 +203,7 @@ def zs_generate_chart(
         }
         filepath = os.path.join(output_folder, model)
         score_list = []
-        if model == "clip" or model == "cc3m_no_training_vit16_assaf":
+        if model == "clip":
             ep = 0
         else:
             ep = ep_eval
