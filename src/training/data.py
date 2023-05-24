@@ -32,6 +32,7 @@ from SVLC_learning.negs_and_pos import (
     RandBothNegatives,
     UseExtra,
     SAM_class,
+    quality_caption_class,
 )
 import re
 from torch.utils.data import ConcatDataset, DataLoader, Dataset
@@ -81,13 +82,14 @@ class CsvDataset(Dataset):
                 [t.strip(".npy") for t in already_created]
             )
             self.images = ["training/" + s for s in left]
-        if self.args.mil_gpt:
-            images_with_mil = os.listdir(self.args.mil_gpt)
+        if self.args.mil_dense:
+            images_with_mil = os.listdir(self.args.mil_dense)
             images_with_mil_full_name = [
                 "training/" + s.strip(".json") for s in images_with_mil
             ]
             common = list(set(self.images).intersection(images_with_mil_full_name))
             self.images = common
+        self.QC_gen = quality_caption_class() if args.create_quality_captions else None
         self.SAM_gen = SAM_class(args) if args.create_SAM else None
         self.negs = choose_negs_function(args)
         self.use_extra = UseExtra(args)
@@ -122,8 +124,8 @@ class CsvDataset(Dataset):
         texts = tokenize([str(self.captions[idx])])[0]
 
         if self.args.save_data:
-            if self.args.create_blip2_cap:
-                dict = self.create_pos_blip2.create_pos(raw)
+            if self.args.create_quality_captions:
+                dict = self.QC_gen.create_cap(raw)
                 if dict != "invalid":
                     save_data(
                         img_path.split("/")[-1],
@@ -144,26 +146,26 @@ class CsvDataset(Dataset):
         if self.args.vl_negs:
             negatives = self.negs.create_negs(self.captions[idx])
             info_dict.update({"negatives": negatives})
-        if self.args.mil_gpt:
+        if self.args.mil_dense:
             img_filename = os.path.basename(img_path)
             try:
-                f = open(f"{os.path.join(self.args.mil_gpt, img_filename)}.json")
+                f = open(f"{os.path.join(self.args.mil_dense, img_filename)}.json")
                 sentences_list_text = json.load(f)
                 sentences_list_text = (
                     sentences_list_text["caption"]
-                    if "SAM" in self.args.mil_gpt
+                    if "SAM" in self.args.mil_dense
                     else sentences_list_text
                 )
             except:
                 print(
-                    f"problem with reading {os.path.join(self.args.mil_gpt, img_filename)}"
+                    f"problem with reading {os.path.join(self.args.mil_dense, img_filename)}"
                 )
                 sentences_list_text = [self.captions[idx]]
 
             sentences_list_text.append(self.captions[idx])
             sentences_list_text = random.choices(sentences_list_text, k=self.text_batch)
             sentences_list = tokenize(sentences_list_text)
-            if self.args.mil_gpt_negs:
+            if self.args.mil_dense_negs:
                 sentences_list_negs = []
                 for sen in sentences_list_text:
                     neg = self.negs.create_negs(sen)
@@ -186,17 +188,17 @@ class CsvDataset(Dataset):
             return [], [], []
 
         if self.args.vl_pos or self.args.vl_negs:
-            if self.args.mil_gpt:
+            if self.args.mil_dense:
                 return images, texts, info_dict, sentences_list
             else:
                 return images, texts, info_dict
-        elif self.args.mil_gpt:
+        elif self.args.mil_dense:
             return images, texts, sentences_list
         else:
             return images, texts
 
     @classmethod
-    def collate_fn_mil_gpt(self):
+    def collate_fn_mil_dense(self):
         # noinspection PyUnreachableCode
         def fun(data):
             img, text_inputs, mil_texts = zip(*data)
@@ -208,7 +210,7 @@ class CsvDataset(Dataset):
         return fun
 
     @classmethod
-    def collate_fn_mil_gpt_plus_pos_or_neg(self):
+    def collate_fn_mil_dense_plus_pos_or_neg(self):
         # noinspection PyUnreachableCode
         def fun(data):
             img, text_inputs, info_dict, mil_texts = zip(*data)
@@ -523,11 +525,11 @@ def get_csv_dataset(args, preprocess_fn, is_train, epoch=0):
         )
     shuffle = is_train and sampler is None
 
-    if args.mil_gpt:
+    if args.mil_dense:
         if args.vl_pos or args.vl_negs:
-            collate_fun = dataset.collate_fn_mil_gpt_plus_pos_or_neg()
+            collate_fun = dataset.collate_fn_mil_dense_plus_pos_or_neg()
         else:
-            collate_fun = dataset.collate_fn_mil_gpt()
+            collate_fun = dataset.collate_fn_mil_dense()
         dataloader = DataLoader(
             dataset,
             collate_fn=collate_fun,

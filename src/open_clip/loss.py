@@ -48,8 +48,8 @@ def gather_features(
             + gathered_negative_text_features[:rank]
             + gathered_negative_text_features[rank + 1 :]
         )
-    if args.mil_gpt:
-        if args.mil_gpt_negs:
+    if args.mil_dense:
+        if args.mil_dense_negs:
             mil_neg_and_text_features = mil_text_features
             # Define an empty list to hold the result
             mil_text_features = []
@@ -194,7 +194,7 @@ class ClipLoss(nn.Module):
             if self.local_loss:
                 logits_per_image = logit_scale * image_features @ all_text_features.T
                 logits_per_text = logit_scale * text_features @ all_image_features.T
-                if self.args.mil_gpt:
+                if self.args.mil_dense:
                     logits_per_image_mil = (
                         logit_scale * image_features @ all_mil_text_features.t()
                     )
@@ -203,11 +203,11 @@ class ClipLoss(nn.Module):
                     logit_scale * all_image_features @ all_text_features.T
                 )
                 logits_per_text = logits_per_image.T
-                if self.args.mil_gpt:
+                if self.args.mil_dense:
                     logits_per_image_mil = (
                         logit_scale * all_image_features @ all_mil_text_features.t()
                     )
-                    if self.args.mil_gpt_negs:
+                    if self.args.mil_dense_negs:
                         logits_per_image_neg_mil = (
                             logit_scale
                             * all_image_features
@@ -216,8 +216,8 @@ class ClipLoss(nn.Module):
         else:
             logits_per_image = logit_scale * image_features @ text_features.T
             logits_per_text = logit_scale * text_features @ image_features.T
-            if self.args.mil_gpt:
-                if self.args.mil_gpt_negs:
+            if self.args.mil_dense:
+                if self.args.mil_dense_negs:
                     mil_neg_and_text_features = mil_texts_features
                     mil_texts_features = []
                     mil_negative_text_features = []
@@ -260,11 +260,11 @@ class ClipLoss(nn.Module):
             + F.cross_entropy(logits_per_text, labels)
         ) / 2
 
-        if self.args.mil_gpt:
-            loss_mil_gpt = self.get_loss_mil_gpt(
+        if self.args.mil_dense:
+            loss_mil_dense = self.get_loss_mil_dense(
                 logits_per_image_mil, logit_scale, logits_per_image_neg_mil
             )
-            total_loss += loss_mil_gpt
+            total_loss += loss_mil_dense
         if self.args.vl_pos:
             total_loss += loss_pos
         if self.args.vl_negs and pos_that_have_negs:
@@ -380,7 +380,7 @@ class ClipLoss(nn.Module):
     #     total_loss = torch.mean(denominator - nominator)
     #     return total_loss
 
-    def get_loss_mil_gpt(
+    def get_loss_mil_dense(
         self, logits_per_image, logit_scale, logits_per_image_neg_mil=None
     ):
         x = logits_per_image
@@ -391,7 +391,7 @@ class ClipLoss(nn.Module):
         nominator = torch.logsumexp(nominator, dim=1)
         total_loss = 0
         if (
-            self.args.mil_gpt_negs
+            self.args.mil_dense_negs
         ):  # logits_per_image_neg_mil is with zeroed where there is no negative. we have negative for each sentence in the mil
             x_neg = logits_per_image_neg_mil  # bs,bs*bs_mil
             x_neg = x_neg.view(images_num, images_num, -1)  # bs,bs,bs_mil

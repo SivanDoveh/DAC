@@ -489,10 +489,10 @@ def parse_args():
     parser.add_argument("--coll", default=False, action="store_true", help="radar")
 
     parser.add_argument(
-        "--create_blip2_cap",
+        "--create_quality_captions",
         default=False,
         action="store_true",
-        help="create_blip2_cap",
+        help="create_quality_captions",
     )
 
     parser.add_argument(
@@ -716,13 +716,13 @@ def parse_args():
 
     # MIL using GPT generated sentences based on original caption
     parser.add_argument(
-        "--mil_gpt",
+        "--mil_dense",
         type=str,
         default="",
         help="folder with GPT generated sentences based on original caption",
     )
     parser.add_argument(
-        "--mil_gpt_negs", default=False, action="store_true", help="mil_gpt_negs"
+        "--mil_dense_negs", default=False, action="store_true", help="mil_dense_negs"
     )
     parser.add_argument("--mil_batch", type=int, default=5, help="mil_batch_size")
     parser.add_argument(

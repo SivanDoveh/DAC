@@ -51,13 +51,13 @@ def unwrap_model(model):
 def data_wrapper(args, batch):
     if "CC3M" in args.train_data:
         if args.vl_pos or args.vl_negs:
-            if args.mil_gpt:
+            if args.mil_dense:
                 images, texts, info_dict, mil_texts = batch
             else:
                 images, texts, info_dict = batch
                 mil_texts = None
         else:
-            if args.mil_gpt:
+            if args.mil_dense:
                 images, texts, mil_texts = batch
             else:
                 images, texts = batch
@@ -244,7 +244,7 @@ def train_one_epoch(
 
         images = images.to(device=device, non_blocking=True)
         texts = texts.to(device=device, non_blocking=True)
-        if args.mil_gpt:
+        if args.mil_dense:
             mil_texts = mil_texts.to(device=device, non_blocking=True)
 
         if args.calc_pos_sim:
@@ -276,7 +276,7 @@ def train_one_epoch(
         optimizer.zero_grad()
 
         with autocast():
-            if args.mil_gpt:
+            if args.mil_dense:
                 _, mil_texts_features, _ = model(images, mil_texts)
             else:
                 mil_texts_features = None

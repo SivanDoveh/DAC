@@ -50,7 +50,7 @@ def main():
             args.use_v2_extra_blip_expanders
             and not args.use_expanders_as_additional_data
             and not args.mil_co_loader
-            and not args.mil_gpt
+            and not args.mil_dense
         )
         or args.calc_pos_sim
         or args.avg_pos_features

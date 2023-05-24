@@ -1,3 +1,5 @@
+from matplotlib import pyplot as plt
+
 from SVLC_learning.color_list import color_list
 from SVLC_learning.action_list import action_list
 from SVLC_learning.material_list import material_list
@@ -466,7 +468,7 @@ class SAM_class(object):
             ax.imshow(np.dstack((img, m * 0.35)))
 
 
-class BlipGen(object):
+class quality_caption_class(object):
     def __init__(self) -> None:
         device = torch.device("cuda") if torch.cuda.is_available() else "cpu"
         model_caption, vis_processors_cap, _ = load_model_and_preprocess(
@@ -476,7 +478,7 @@ class BlipGen(object):
         self.model_caption = model_caption
         self.vis_processors_cap = vis_processors_cap
 
-    def create_pos(self, raw_image):
+    def create_cap(self, raw_image):
         try:
             image = (
                 self.vis_processors_cap["eval"](raw_image).unsqueeze(0).to(self.device)
