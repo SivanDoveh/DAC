@@ -8,7 +8,6 @@ import random
 from datetime import datetime
 
 import numpy as np
-import cvar_pyutils.debugging_tools
 import torch
 from torch import optim
 from torch.cuda.amp import GradScaler
@@ -100,10 +99,7 @@ def main():
                     stderrToServer=True,
                     suspend=False,
                 )
-            else:
-                cvar_pyutils.debugging_tools.set_remote_debugger(
-                    args.debug_ip, args.debug_port
-                )
+
 
     if args.radar:
         generate_chart(

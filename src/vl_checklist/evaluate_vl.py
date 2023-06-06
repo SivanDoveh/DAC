@@ -127,16 +127,8 @@ class Evaluate(object):
         self.saliency_layer = "layer4"
 
     def start(self):
-        avg = 0
         for data_type in self.types:
-            results = self.eval(data_type=data_type)
-        #     avg += results
-        # avg = avg / len(self.types)
-        # if self.args.save_logs:
-        #     if self.tb_writer is not None:
-        #         self.tb_writer.add_scalar(f"val/{self.types[0].split('/')[0]}_avg_eval", avg, self.epoch)
-        #         logging.info(
-        #             f" AVG {self.epoch}: {self.types[0].split('/')[0]}_avg_eval {avg}")
+            _ = self.eval(data_type=data_type)
 
     def clip_model_wrapper(self, images, texts):
         probs = []

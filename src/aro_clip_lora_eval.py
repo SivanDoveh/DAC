@@ -84,10 +84,6 @@ if __name__ == "__main__":
                 stderrToServer=True,
                 suspend=False,
             )
-        else:
-            cvar_pyutils.debugging_tools.set_remote_debugger(
-                args.debug_ip, args.debug_port
-            )
 
     # model, image_preprocess = clip.load("ViT-B/32", jit=False, lora=lora)
     model, _, image_preprocess = create_model_and_transforms(
