@@ -1,11 +1,13 @@
 # DAC
 ## Environment
+```shell script
 conda deactivate # deactivate any active environments
 conda create -n dac python=3.8.13 # install the conda environment with conda dependencies
 conda activate dac # activate the environment
 conda install -c conda-forge libjpeg-turbo
 conda install pytorch==1.12.1 torchvision==0.13.1 cudatoolkit=11.3.1 -c pytorch
 pip install -r requirements.txt
+```
 
 ## Data Preparations and creation 
 ### Training Data
