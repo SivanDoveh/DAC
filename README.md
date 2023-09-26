@@ -1,10 +1,14 @@
 # DAC
-## Data Preparations
-### Training data
+## Data Preparations and creation 
+### Training Data
+#### Download CC3M data
 Download Conceptual Captions 3M training and validation splits from https://ai.google.com/research/ConceptualCaptions/download  
 After data preparation, place the data in `DAC/CC3M_data/training` and `DAC/CC3M_data/validation`  
 
-First, navigate to the src directory:
+Download and place in `DAC/CC3M_data/` train_with_cap.csv and val_with_cap.csv from https://drive.google.com/drive/folders/1WosT_kdam1ymWjVSK2ezyydLoqmm0LdX?usp=sharing
+
+
+For data creation, first, navigate to the src directory:
 ```shell script
 cd src
 ```
