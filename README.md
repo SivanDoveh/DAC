@@ -1,4 +1,12 @@
 # DAC
+## Environment
+conda deactivate # deactivate any active environments
+conda create -n dac python=3.8.13 # install the conda environment with conda dependencies
+conda activate dac # activate the environment
+conda install -c conda-forge libjpeg-turbo
+conda install pytorch==1.12.1 torchvision==0.13.1 cudatoolkit=11.3.1 -c pytorch
+pip install -r requirements.txt
+
 ## Data Preparations and creation 
 ### Training Data
 #### Download CC3M data
@@ -8,7 +16,7 @@ After data preparation, place the data in `DAC/CC3M_data/training` and `DAC/CC3M
 Download and place in `DAC/CC3M_data/` train_with_cap.csv and val_with_cap.csv from https://drive.google.com/drive/folders/1WosT_kdam1ymWjVSK2ezyydLoqmm0LdX?usp=sharing
 
 
-For data creation, first, navigate to the src directory:
+First, navigate to the src directory:
 ```shell script
 cd src
 ```
