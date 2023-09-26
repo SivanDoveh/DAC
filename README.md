@@ -14,21 +14,23 @@ cd src
 ```
 
 #### Create quality captions:
+
 ```shell script
+mkdir DAC/quality_captions/
 python3 training/main.py --create_quality_captions --save_data --batch-size 1
 ```
-Quality captions should be in  `DAC/quality_captions/` 
+
 
 #### Create Dense captions:
 ```shell script
+mkdir DAC/SAM_dense/
 python3 training/main.py --create_SAM --save_data --batch-size 1
 ```
-SAM dense captions should be in `DAC/SAM_dense/`
 
 ```shell script
+mkdir DAC/LLM_dense/
 python3 create_LLM_dense.py
 ```
-LLM dense captions should be in `DAC/LLM_dense/`
 
 ### Evaluation data
 Prepare vl checklist dataset as described in https://github.com/om-ai-lab/VL-CheckList/blob/main/DATASETS.md  
