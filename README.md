@@ -17,6 +17,11 @@ After data preparation, place the data in `DAC/CC3M_data/training` and `DAC/CC3M
 
 Download and place in `DAC/CC3M_data/` train_with_cap.csv and val_with_cap.csv from https://drive.google.com/drive/folders/1WosT_kdam1ymWjVSK2ezyydLoqmm0LdX?usp=sharing
 
+### Evaluation data
+Prepare vl checklist dataset as described in https://github.com/om-ai-lab/VL-CheckList/blob/main/DATASETS.md  
+Then move the vl dataset to `DAC/vl_datasets/`  
+If you followed the instructions correctly, you should have the following folders inside vl_datasets: **'hake', 'swig', 'vg'**. 
+
 
 First, navigate to the src directory:
 ```shell script
@@ -44,7 +49,7 @@ python3 create_LLM_dense.py
 
 ### Evaluation data
 Prepare vl checklist dataset as described in https://github.com/om-ai-lab/VL-CheckList/blob/main/DATASETS.md  
-Then move the vl dataset to `DAC/vl_datasets/`  
+Then move the vl dataset to `DAC/vl_checklist_images_root_folder/`  
 If you followed the instructions correctly, you should have the following folders inside vl_datasets: **'hake', 'swig', 'vg'**. 
 
 prepare aro dataset as described in https://github.com/mertyg/vision-language-models-are-bows
@@ -73,7 +78,8 @@ python3 training/main.py --epochs 5 --name exp_name --lora 4 --use_only_quality_
 All vl_checklist jsons will be saved in `DAC/eval_jsons/clip/exp_name/` and the result will be printed. 
 To prepare the vl checklist evaluate results for the experiment **exp_name** run the following command:
 ```shell script
-python3 training/main.py  --lora 4 --pretrained openai --eval_vl_cklist --eval_only --resume /path/to/checkpoint
+mkdir vl_checklist_accuracy_jsons_folder
+python3 training/main.py  --lora 4 --pretrained openai --eval_vl_cklist --eval_only --resume /path/to/checkpoint --vl_checklist_images_root_folder DAC/vl_checklist_images_root_folder/
 ```
 
 To print the aro evaluated results for the experiment **exp_name** run the following command:
