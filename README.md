@@ -32,14 +32,14 @@ cd src
 
 ```shell script
 mkdir DAC/quality_captions/
-python3 training/main.py --create_quality_captions --save_data --batch-size 1
+python3 training/main.py --create_quality_captions --save_data --batch-size 1 --workers 0
 ```
 
 
 #### Create Dense captions:
 ```shell script
 mkdir DAC/SAM_dense/
-python3 training/main.py --create_SAM --save_data --batch-size 1
+python3 training/main.py --create_SAM --save_data --batch-size 1 --workers 0 --model_SAM /path/to/sam_vit_h_4b8939.pth
 ```
 
 ```shell script
