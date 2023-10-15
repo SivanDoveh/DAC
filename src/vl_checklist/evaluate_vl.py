@@ -239,15 +239,7 @@ class Evaluate(object):
                     )
 
                 logging.info(
-                    f"Eval {name} VL Epoch: {self.epoch} {data_type}_eval: {round(accuracy, 4)}"
+                    f"Eval {name} VL {data_type}_eval: {round(accuracy, 4)}"
                 )
-
-                if self.args.save_logs:
-                    if self.tb_writer is not None:
-                        self.tb_writer.add_scalar(
-                            f"val/{name}/{data_type}_eval",
-                            round(accuracy, 4),
-                            self.epoch,
-                        )
 
         return 0
