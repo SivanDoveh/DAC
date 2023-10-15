@@ -14,7 +14,6 @@ from .distributed import is_master
 from .zero_shot import zero_shot_eval
 from .precision import get_autocast
 from sentence_transformers import SentenceTransformer, util
-from create_expansions.utils_evlk import clear_pad, clear_pad_texts
 from itertools import *
 
 
@@ -89,35 +88,6 @@ def data_wrapper(args, batch):
             None,
             mil_texts,
             False,
-        )
-    if args.avg_pos_features:
-        match_list = info_dict.get("match_list", None)
-        match_list, poss, list_amount_of_pos = clear_pad(match_list, poss)
-        return (
-            images,
-            texts,
-            negs,
-            poss,
-            None,
-            None,
-            list_amount_of_pos,
-            match_list,
-            mil_texts,
-            False,
-        )
-    if args.mil_co_loader and texts.shape[1] == 100:
-        texts, list_amount_of_pos = clear_pad_texts(texts)
-        return (
-            images,
-            texts,
-            negs,
-            poss,
-            None,
-            None,
-            list_amount_of_pos,
-            None,
-            None,
-            True,
         )
 
     return images, texts, negs, poss, None, None, None, None, mil_texts, False

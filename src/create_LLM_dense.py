@@ -1,15 +1,16 @@
 from transformers import pipeline
 import json
 import os
+import glob
 os.umask(0)
 
 if __name__ == '__main__':
 
     generator = pipeline('text-generation', model='EleutherAI/gpt-neo-2.7B', device=0)
-
-    for json_file_name in os.listdir("/DAC/quality_captions/"):
-        clean_json_file_name = json_file_name.replace(".json", "").replace("/DAC/quality_captions/","")
-        file_path = f"/DAC/LLM_dense/{clean_json_file_name}.txt"
+    os.makedirs("../LLM_dense/", exist_ok=True)
+    for json_file_name in glob.glob("../quality_captions/*.json"):
+        clean_json_file_name = os.path.basename(json_file_name)[:-5]
+        file_path = f"../LLM_dense/{clean_json_file_name}.txt"
         if os.path.isfile(file_path):
             print(f"file already exists {file_path}")
             continue

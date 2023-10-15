@@ -11,7 +11,6 @@ import numpy as np
 import torch
 from torch import optim
 from torch.cuda.amp import GradScaler
-from training.radar_with_zs import zs_generate_chart as generate_chart
 from torchvision.transforms import ToTensor
 
 try:
@@ -100,21 +99,6 @@ def main():
                     suspend=False,
                 )
 
-
-    if args.radar:
-        generate_chart(
-            args,
-            args.vl_checklist_accuracy_jsons_folder,
-            "corpus.json",
-            "itc",
-            chart_type="radar",
-            models=args.eval_radar,
-            name=args.radar_name,
-            ep_eval=args.eval_radar_ep,
-            radar_legends=args.radar_legends,
-            start_radar=args.start_radar,
-        )
-        return
 
     if is_master(args, local=args.log_local):
         log_base_path = os.path.join(args.logs, args.name)

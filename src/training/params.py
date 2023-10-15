@@ -344,19 +344,19 @@ def parse_args():
     parser.add_argument(
         "--vl_checklist_accuracy_jsons_folder",
         type=str,
-        default=" ",
+        default="vl_checklist_accuracy_jsons_folder",
         help="vl_checklist_accuracy_jsons_folder",
     )
     parser.add_argument(
         "--vl_checklist_images_root_folder",
         type=str,
-        default=" ",
+        default="vl_checklist_images_root_folder",
         help="vl_checklist_images_root_folder",
     )
     parser.add_argument(
         "--vl_checklist_jsons_with_phrases_to_images_root_folder",
         type=str,
-        default=" ",
+        default="vl_checklist_annot_data",
         help="vl_checklist_jsons_with_phrases_to_images_root_folder",
     )
     parser.add_argument(

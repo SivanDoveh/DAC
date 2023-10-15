@@ -218,9 +218,6 @@ class Evaluate(object):
                 accuracy = float(num_t) / (num_t + num_f)
                 results[name] = round(accuracy, 4)
                 file_name = data_type.replace("/", "_")
-                # try:
-                #     path = os.path.join(self.args.vl_checklist_accuracy_jsons_folder, self.args.resume.split('/')[-3])
-                # except:
                 path = os.path.join(
                     self.args.vl_checklist_accuracy_jsons_folder, self.args.name
                 )
@@ -253,13 +250,4 @@ class Evaluate(object):
                             self.epoch,
                         )
 
-        # if self.args.save_logs and is_master(self.args):
-        #     if self.tb_writer is not None:
-        #         both_res=0
-        #         for k in results.keys():
-        #             both_res += results[k]
-        #         both_res = both_res/results.keys().__len__()
-        #         self.tb_writer.add_scalar(f"val/both/{data_type}_eval", both_res, self.epoch)
-        #
-        #         return both_res
         return 0
