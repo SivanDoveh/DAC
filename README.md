@@ -1,4 +1,10 @@
-# DAC
+# Dense and Aligned Captions (DAC) Promote Compositional Reasoning in VL Models
+## An official repo for the *Spotlight* Neurips 2023 paper :) 
+
+Arxiv: https://arxiv.org/abs/2305.19595
+
+_______________________________
+
 ## Environment
 ```shell script
 conda deactivate # deactivate any active environments
