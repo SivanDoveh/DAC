@@ -9,7 +9,7 @@ from open_clip import create_model_and_transforms
 from aro.dataset_zoo import VG_Relation, VG_Attribution
 from aro.dataset_zoo import COCO_Order, Flickr30k_Order
 import csv
-from open_clip import tokenize
+from open_clip import tokenize 
 
 
 def interpolate_models(theta_0, theta_1, alpha):
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     print(f"VG-Attribution Macro Accuracy: {df.Accuracy.mean()}")
     vg_attribution_macro_acc = df.Accuracy.mean()
 
-    root_dir = f"{root_root_dir}COCO"
+    root_dir = f"{root_root_dir}/COCO"
     coco_order_dataset = COCO_Order(
         image_preprocess=image_preprocess,
         download=True,
@@ -311,7 +311,7 @@ if __name__ == "__main__":
         print(root_dir, record)
         coco_order = list(record.values())[0]
 
-    root_dir = f"{root_root_dir}Flickr30k"
+    root_dir = f"{root_root_dir}/Flickr30k"
     flickr_order_dataset = Flickr30k_Order(
         image_preprocess=image_preprocess, split="test", root_dir=root_dir
     )
